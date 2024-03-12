@@ -30,6 +30,15 @@ The log_input stats
 ## models_dump
 The binary dump of the models applied to log prexifes (encoded)
 
+## models_shap
+SHAP values from models
+
+## results_models
+Results from models (03_log_prediction_RFR_XGR.py and 03_log_prediction_LSTM.py)
+
+## results_models_plot
+Plots of results from models
+
 ## 00_log_disco_duration.py
 For each log filtered in DISCO, it adds the duration from the DISCO statistics and the partial timing (using ./log_disco and ./log_disco_duration)
 
@@ -42,7 +51,7 @@ Encode the prefixes in 3 modes; "B" for binary (output: log_2016-2022_clean_5_ev
 ## 03_log_prediction_RFR_XGR.py
 Performs prediction with 2 machine learning algorithms: Random Forest Regressor (RFR) and Gradient Boosting Regression (XGR)
 
-## 03_log_prediction_LSTM
+## 03_log_prediction_LSTM.py
 Performs prediction with LSTM
 
 ## requirements.txt
