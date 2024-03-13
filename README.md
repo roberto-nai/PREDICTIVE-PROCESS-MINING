@@ -54,5 +54,24 @@ Performs prediction with 2 machine learning algorithms: Random Forest Regressor 
 ## 03_log_prediction_LSTM.py
 Performs prediction with LSTM
 
+## 04_prediction_plots.py
+Create result graphs in results_models
+
 ## requirements.txt
 Requirements file
+```
+joblib==1.3.2
+matplotlib==3.6.2
+networkx==3.0
+numpy==1.23.5
+pandas==1.5.2
+pm4py==2.5.3
+PyYAML==6.0.1
+scikit_learn==1.3.2
+scipy==1.12.0
+seaborn==0.13.2
+shap==0.44.1
+tensorflow==2.13.0
+tensorflow_macos==2.13.0
+xgboost==1.7.3
+```
