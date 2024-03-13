@@ -2,7 +2,8 @@ import os
 from os.path import join as os_path_join
 from os.path import exists as os_path_exists
 from os import makedirs as os_makedirs
-import datetime 
+from os.path import abspath as os_path_abspath
+from os.path import basename as os_path_basename
 import pandas as pd
 
 def seconds_to_hours(seconds:int) -> str:
@@ -108,3 +109,12 @@ def check_and_create_directory(directory:str, parent_dir:str=""):
         print("The directory '{}' has been created successfully".format(directory))
     else:
         print("The directory '{}' already exists".format(directory))
+
+
+def script_info(file):
+    """
+    Returns information about the script being considered
+    """
+    script_path = os_path_abspath(file)
+    script_name = os_path_basename(script_path)
+    return script_path, script_name

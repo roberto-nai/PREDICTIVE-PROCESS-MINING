@@ -17,8 +17,6 @@ import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt # to save SHAP figures
-from os.path import abspath as os_path_abspath
-from os.path import basename as os_path_basename
 from os.path import join as os_path_join
 import sys
 # ML models
@@ -35,7 +33,7 @@ import shap
 
 ### LOCAL IMPORT ###
 from config.config_reader import ConfigReadYaml
-from utils.utils import seconds_to_hours, app_log_init, app_log_write, file_list_by_type, get_llm_data, check_and_create_directory
+from utils.utils import seconds_to_hours, app_log_init, app_log_write, file_list_by_type, get_llm_data, check_and_create_directory, script_info
 
 ### GLOBALS ###
 
@@ -84,8 +82,7 @@ model_dump = int(yaml_config['MODEL_DUMP']) # yes / no
 # APP-LOG (SCRIPT)
 app_log_dir = yaml_config['DIR_APP_LOG']
 app_log_file = yaml_config['FILE_APP_LOG']
-script_path = os_path_abspath(__file__)
-script_name = os_path_basename(script_path) # file name of this script
+script_path, script_name = script_info(__file__)
 app_log_file_header = list(yaml_config['APP_LOG_HEADER'])
 app_log_dic = dict(yaml_config['APP_LOG_DIC'])
 

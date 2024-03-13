@@ -3,9 +3,8 @@ import os
 import math 
 import pandas as pd
 from datetime import datetime
-from os.path import abspath as path_abspath
-from os.path import basename as path_basename
-from os.path import join as path_join
+
+from os.path import join as os_path_join
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
@@ -15,7 +14,7 @@ from tensorflow.keras.layers import Dropout
 
 ### LOCAL IMPORT ###
 from config.config_reader import ConfigReadYaml
-from utils.utils import app_log_init, app_log_write, file_list_by_type, get_llm_data, check_and_create_directory
+from utils.utils import app_log_init, app_log_write, file_list_by_type, get_llm_data, check_and_create_directory, script_info
 
 ### GLOBALS ###
 
@@ -36,8 +35,7 @@ path_llm = os.path.join(dir_log_llm, log_llm_file)
 # APP-LOG (SCRIPT)
 app_log_dir = yaml_config['DIR_APP_LOG']
 app_log_file = yaml_config['FILE_APP_LOG']
-script_path = path_abspath(__file__)
-script_name = path_basename(script_path) # file name of this script
+script_path, script_name = script_info(__file__)
 app_log_file_header = list(yaml_config['APP_LOG_HEADER'])
 app_log_dic = dict(yaml_config['APP_LOG_DIC'])
 
@@ -119,7 +117,7 @@ else:
         prefix_enc = metadata[-1]
 
         # Load the dataset (the log encoded)
-        path_csv = path_join(dir_log_encoded, file_csv)
+        path_csv = os_path_join(dir_log_encoded, file_csv)
         print("File name:", file_csv)
         print("File path:", path_csv)
         print()
@@ -247,12 +245,12 @@ df_results = df_results.sort_values(by = 'RMSE_norm', ascending=True)
 # print(df_results.head()) # debug
 
 # Save results in CSV
-path_results = path_join(dir_models_results, file_results_csv)
+path_results = os_path_join(dir_models_results, file_results_csv)
 print("Saving results to:", file_results_csv)
 df_results.to_csv(path_results, sep = csv_separator, index=False)
 print()
 # Save results in XLSX
-path_results = path_join(dir_models_results, file_results_xlsx)
+path_results = os_path_join(dir_models_results, file_results_xlsx)
 print("Saving results to :", file_results_xlsx)
 df_results.to_excel(path_results, index=False, sheet_name=model_suffix)
 print()
