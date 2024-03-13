@@ -41,15 +41,16 @@ script_name = path_basename(script_path) # file name of this script
 app_log_file_header = list(yaml_config['APP_LOG_HEADER'])
 app_log_dic = dict(yaml_config['APP_LOG_DIC'])
 
+# LSTM settings
+model_epochs = int(yaml_config['EPOCHS_NUM']) # 200
+optimizer_name = str(yaml_config['OPTIMIZER_NAME']) # "adam"
+loss_name = str(yaml_config['LOSS_NAME'])  # "mse"
+
 ### INPUT ###
 model_suffix = "LSTM" # <-- INPUT: enter the desired model prefix
 # list_col_exclude = [log_amount_col_name] # <-- INPUT: enter the columns to be excluded from the data, else []
 list_col_exclude = [] # <-- INPUT: enter the columns to be excluded from the data, else []
 list_col_exclude_len = len(list_col_exclude)
-# LSTM
-model_epochs = int(yaml_config['EPOCHS_NUM']) # 200
-optimizer_name = str(yaml_config['OPTIMIZER_NAME']) # "adam"
-loss_name = str(yaml_config['LOSS_NAME'])  # "mse"
 
 ### OUTPUT ###
 string_llm = "".join(["LLM-",str(llm_do)])
@@ -172,10 +173,11 @@ else:
         features_num = len(X.columns)
         # print("Number of features (excluding ID and LABEL)", features_num) # debug
 
+        ## LSTM (begin)
+
         # Split the dataset
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        ## LSTM (begin)
         # Normalize the data using the MinMax tecnique
         scaler = MinMaxScaler()
         X_train = scaler.fit_transform(X_train)
@@ -198,7 +200,7 @@ else:
 
         model.add(Dense(1))
 
-        model.summary()
+        model.summary() # displays the model configuration
 
         # Compile the model
         # loss_name = "mse"
@@ -230,6 +232,7 @@ else:
         rmse_test_norm = rmse_test / (max_test - min_test) # normalized RMSE
         print("RMSE normalized data on dataset '{}':".format(file_csv,rmse_test_norm))
 
+        # save the results in a dictionary
         dic_res = {'file_name': file_csv, 'prefix_length':prefix_len, 'prefix_encoding':prefix_enc, 'model': model_suffix, 'features_num':features_num, 'features_excluded': list_col_exclude_len, 'LLM_data':llm_do, 'epochs': model_epochs, 'optimizer_name':optimizer_name, 'loss':loss_name, 'RMSE_model': rmse_test, 'RMSE_norm':rmse_test_norm}
         list_dic_res.append(dic_res)
 
