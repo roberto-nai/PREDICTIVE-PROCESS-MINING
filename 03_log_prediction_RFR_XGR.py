@@ -296,9 +296,6 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     # Make new prediction with HT model
     y_pred = best_rf.predict(X_test)
 
-    end_time_model = time.time()
-
-    time_delta_model = int(end_time_model - start_time_model)
 
     mae_ht = metrics.mean_absolute_error(y_test, y_pred)
     mse_ht = metrics.mean_squared_error(y_test, y_pred)
@@ -315,14 +312,9 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     print('Mean Absolute Percentage Error (MAPE) with HT:', round_mape_ht)
     # print('Accuracy with HT:', accuracy_ht)
 
-    string_hours = seconds_to_hours(time_delta_model)
-
-    print()
-    print("- Timing:", time_delta_model, "(",string_hours,")")
-    print()
-
     # CROSS VALIDATION (CV)
-    
+    print(">> Cross validation")
+    print()
     # Min and Max values for RMSE of CV normalization
     min_cv = min(labels)
     max_cv = max(labels)
@@ -334,11 +326,24 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     rmse_cv = np.sqrt(-cv_scores)
     rmse_cv_norm = rmse_cv / (max_cv - min_cv) # RMSE normalized
 
+    # End of model computation
+    end_time_model = time.time()
+    time_delta_model = int(end_time_model - start_time_model)
+    string_hours = seconds_to_hours(time_delta_model)
+    print()
+    print("- Timing:", time_delta_model, "(",string_hours,")")
+    print()
+
+    print(">> Saving model results")
+    print()
+
     # Save metrics in the dictionary
-    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd':min_test, 'max_duration_dd': max_test, 'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv': rmse_cv, 'RMSE_cv_norm': rmse_cv_norm, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
+    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd_test':min_test, 'max_duration_dd_test': max_test, 'min_duration_dd_cv':min_cv, 'max_duration_dd_cv': max_cv,  'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv': rmse_cv, 'RMSE_cv_norm': rmse_cv_norm, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
 
     # Save the model and its data
     if model_dump == 1:
+        print(">> Saving model dump")
+        print()
         model_save(best_rf, model_suffix, prefix_enc, prefix_len, X_train, y_train, X_test, y_test, vectors_features, results_configuration)
 
     # model_shap(best_rf, model_suffix, prefix_enc, prefix_len, X_train, y_train, X_test, y_test, vectors_features)
@@ -447,10 +452,6 @@ def model_xgb(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     # Make new prediction with HT model
     y_pred = best_xgb.predict(X_test)
 
-    end_time_model = time.time()
-
-    time_delta_model = int(end_time_model - start_time_model)
-
     mae_ht = metrics.mean_absolute_error(y_test, y_pred)
     mse_ht = metrics.mean_squared_error(y_test, y_pred)
     rmse_ht = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
@@ -467,17 +468,39 @@ def model_xgb(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     print('Mean Absolute Percentage Error (MAPE) with HT:', round_mape_ht)
     # print('Accuracy with HT:', accuracy_ht)
 
-    string_hours = seconds_to_hours(time_delta_model)
+    # CROSS VALIDATION (CV)
+    print(">> Cross validation")
+    print()
+    # Min and Max values for RMSE of CV normalization
+    min_cv = min(labels)
+    max_cv = max(labels)
 
+    # Note: use neg_mean_squared_error to obtain the negative MSE
+    cv_scores = cross_val_score(best_xgb, vectors, labels, cv=cv_folds_num, scoring='neg_mean_squared_error')
+
+    # converts scores to positive RMSE
+    rmse_cv = np.sqrt(-cv_scores)
+    rmse_cv_norm = rmse_cv / (max_cv - min_cv) # RMSE normalized
+
+    # End of model computation
+    end_time_model = time.time()
+    time_delta_model = int(end_time_model - start_time_model)
+    string_hours = seconds_to_hours(time_delta_model)
     print()
     print("- Timing:", time_delta_model, "(",string_hours,")")
     print()
 
+    print(">> Saving model results")
+    print()
+
     # Save metrics in the dictionary
-    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': features_exc, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd':min_test, 'max_duration_dd': max_test, 'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
+    # dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': features_exc, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd':min_test, 'max_duration_dd': max_test, 'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
+    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd_test':min_test, 'max_duration_dd_test': max_test, 'min_duration_dd_cv':min_cv, 'max_duration_dd_cv': max_cv,  'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv': rmse_cv, 'RMSE_cv_norm': rmse_cv_norm, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
 
     # Save the model and its data
     if model_dump == 1:
+        print(">> Saving model dump")
+        print()
         model_save(best_xgb, model_suffix, prefix_enc, prefix_len, X_train, y_train, X_test, y_test, vectors_features, results_configuration)
 
     # model_shap(best_xgb, model_suffix, prefix_enc, prefix_len, X_train, y_train, X_test, y_test, vectors_features)
