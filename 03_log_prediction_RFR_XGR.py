@@ -196,6 +196,51 @@ def log_encoded_extract_data(df_in: pd.DataFrame, case_id_column_name: str, labe
 
     return vectors, vectors_features, y
 
+def model_cross_validatio(ensemble_model, vectors: np.ndarray, labels:list, folds_num: int, score_name:str = 'neg_mean_squared_error') -> dict:
+    """
+    Given an ensemble model, performs Cross Validation (CV).
+    The cross_val_score function in Scikit-learn is designed to automatically handle both the training (fit) and evaluation (predict and metric calculation) of the model across different portions of the dataset, following the cross-validation scheme.
+
+    Parameters
+    -----------------------
+    ensemble_model: ,
+        one ensemble model
+    vectors: np.ndarray,
+        feature names of X
+    labels: list,
+        the outcome y
+    folds_num: int,
+        number of folds for CV
+    score_name: str,
+        classification scores according to those available in the scikit-learn library
+
+    Returns
+    -----------------------
+    Dictionary with model results
+
+    """
+    # Min and Max values for RMSE of CV normalization
+    min_cv = min(labels)
+    max_cv = max(labels)
+
+    # Note: use neg_mean_squared_error to obtain the negative MSE
+    cv_scores = cross_val_score(ensemble_model, vectors, labels, cv=folds_num, scoring=score_name)
+    # print(type(cv_scores)) # debug
+    # cv_scores is a numpy.ndarray 
+
+    # converts scores to positive RMSE
+    rmse_cv = np.sqrt(-cv_scores)
+    # cv_scores is a numpy.ndarray 
+    rmse_cv_meam = rmse_cv.mean()
+    rmse_cv_norm = rmse_cv / (max_cv - min_cv) # RMSE normalized (division is applied to each element of the numpy.ndarray)
+    # rmse_cv_norm is a numpy.ndarray 
+    rmse_cv_norm_mean = rmse_cv_norm.mean()
+
+    cv_results = {'min_cv': min_cv,'max_cv': max_cv, 'rmse_cv_mean': rmse_cv_meam,'rmse_cv_norm_mean': rmse_cv_norm_mean}
+
+    return cv_results
+
+
 def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:int, features_exc:int, results_configuration:str) -> dict:
     """
     Runs the Random Forest Regressor
@@ -296,7 +341,6 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     # Make new prediction with HT model
     y_pred = best_rf.predict(X_test)
 
-
     mae_ht = metrics.mean_absolute_error(y_test, y_pred)
     mse_ht = metrics.mean_squared_error(y_test, y_pred)
     rmse_ht = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
@@ -313,23 +357,17 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     # print('Accuracy with HT:', accuracy_ht)
 
     # CROSS VALIDATION (CV)
-    print(">> Cross validation")
+    print(">> Cross validation (CV)")
     print()
-    # Min and Max values for RMSE of CV normalization
-    min_cv = min(labels)
-    max_cv = max(labels)
-
-    # Note: use neg_mean_squared_error to obtain the negative MSE
-    cv_scores = cross_val_score(best_rf, vectors, labels, cv=cv_folds_num, scoring='neg_mean_squared_error')
-
-    # converts scores to positive RMSE
-    rmse_cv = np.sqrt(-cv_scores)
-    rmse_cv_norm = rmse_cv / (max_cv - min_cv) # RMSE normalized
+    cv_results = model_cross_validatio(best_rf, vectors, labels, cv_folds_num, 'neg_mean_squared_error')
+    print('Root Mean Squared Error (RMSE) from CV (mean):', cv_results["rmse_cv_meam"]) # rmse = mse**.5
+    print('Root Mean Squared Error (RMSE) from CV normalized (mean):', cv_results["rmse_cv_norm_mean"])
 
     # End of model computation
     end_time_model = time.time()
     time_delta_model = int(end_time_model - start_time_model)
     string_hours = seconds_to_hours(time_delta_model)
+
     print()
     print("- Timing:", time_delta_model, "(",string_hours,")")
     print()
@@ -338,7 +376,7 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     print()
 
     # Save metrics in the dictionary
-    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd_test':min_test, 'max_duration_dd_test': max_test, 'min_duration_dd_cv':min_cv, 'max_duration_dd_cv': max_cv,  'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv': rmse_cv, 'RMSE_cv_norm': rmse_cv_norm, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
+    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd_test':min_test, 'max_duration_dd_test': max_test, 'min_duration_dd_cv':cv_results["min_cv"], 'max_duration_dd_cv': cv_results["max_cv"],  'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv_mean': cv_results["rmse_cv_meam"], 'RMSE_cv_norm': cv_results["rmse_cv_norm_mean"], 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
 
     # Save the model and its data
     if model_dump == 1:
@@ -471,16 +509,11 @@ def model_xgb(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     # CROSS VALIDATION (CV)
     print(">> Cross validation")
     print()
-    # Min and Max values for RMSE of CV normalization
-    min_cv = min(labels)
-    max_cv = max(labels)
-
-    # Note: use neg_mean_squared_error to obtain the negative MSE
-    cv_scores = cross_val_score(best_xgb, vectors, labels, cv=cv_folds_num, scoring='neg_mean_squared_error')
-
-    # converts scores to positive RMSE
-    rmse_cv = np.sqrt(-cv_scores)
-    rmse_cv_norm = rmse_cv / (max_cv - min_cv) # RMSE normalized
+    print(">> Cross validation (CV)")
+    print()
+    cv_results = model_cross_validatio(best_xgb, vectors, labels, cv_folds_num, 'neg_mean_squared_error')
+    print('Root Mean Squared Error (RMSE) from CV (mean):', cv_results["rmse_cv_meam"]) # rmse = mse**.5
+    print('Root Mean Squared Error (RMSE) from CV normalized (mean):', cv_results["rmse_cv_norm_mean"])
 
     # End of model computation
     end_time_model = time.time()
@@ -495,7 +528,7 @@ def model_xgb(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
 
     # Save metrics in the dictionary
     # dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': features_exc, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd':min_test, 'max_duration_dd': max_test, 'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
-    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd_test':min_test, 'max_duration_dd_test': max_test, 'min_duration_dd_cv':min_cv, 'max_duration_dd_cv': max_cv,  'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv': rmse_cv, 'RMSE_cv_norm': rmse_cv_norm, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
+    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd_test':min_test, 'max_duration_dd_test': max_test, 'min_duration_dd_cv':cv_results["min_cv"], 'max_duration_dd_cv': cv_results["max_cv"],  'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv_mean': cv_results["rmse_cv_meam"], 'RMSE_cv_norm': cv_results["rmse_cv_norm_mean"], 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
 
     # Save the model and its data
     if model_dump == 1:
