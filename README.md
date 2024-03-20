@@ -27,6 +27,9 @@ The event-log prefixes
 ### log_stats
 The log_input stats
 
+### models_config
+Configuration of input data of prediction models
+
 ### models_dump
 The binary dump of the models applied to log prexifes (encoded)
 
@@ -38,6 +41,9 @@ Results from models (03_log_prediction_RFR_XGR.py and 03_log_prediction_LSTM.py)
 
 ### results_models_plot
 Plots of results from models
+
+## utilities_manager
+Utilities
 
 ### 00_log_disco_duration.py
 For each log filtered in DISCO, it adds the duration from the DISCO statistics and the partial timing (using ./log_disco and ./log_disco_duration)

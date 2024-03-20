@@ -1,0 +1,35 @@
+{
+    "POSITIONS": 
+    [
+      {
+        "MODEL": "RFR",
+        "LLM": 0,
+        "COLUMNS_EXCLUDED": []
+      },
+      {
+        "MODEL": "RFR",
+        "LLM": 1,
+        "COLUMNS_EXCLUDED": []
+      },
+      {
+        "MODEL": "RFR",
+        "LLM": 0,
+        "COLUMNS_EXCLUDED": ["amount"]
+      },
+      {
+        "MODEL": "XGR",
+        "LLM": 0,
+        "COLUMNS_EXCLUDED": []
+      },
+      {
+        "MODEL": "XGR",
+        "LLM": 1,
+        "COLUMNS_EXCLUDED": []
+      },
+      {
+        "MODEL": "XGR",
+        "LLM": 0,
+        "COLUMNS_EXCLUDED": ["amount"]
+      }
+    ]
+  }

@@ -11,13 +11,23 @@ DIR_LOG_STATS: log_stats # Directory with log stats
 DIR_MODELS_RESULTS: results_models # Directory with predictive models results
 DIR_EXCLUDE: log_exclude # Directory with case_id to be excluded from event-log
 FILE_EXCLUDE: case_id_exclude.txt # File with case_id to be excluded from event-log
-DIR_MODELS_PLOT: results_models_plot # Directory prediction plots
+
+# MODELS DUMP
 DIR_MODELS_DUMP: models_dump # Binary files of prediction models
-DIR_MODELS_SHAP: models_shap # Binary files of prediction models
-DIR_APP_LOG: app_log # log of the application
-FILE_APP_LOG: app_log.csv # log of the application
+
+# MODELS SHAP
+DIR_MODELS_SHAP: models_shap 
+
+# MODELS PLOT
+DIR_MODELS_PLOT: results_models_plot # Directory prediction plots
+
+# LLM
 DIR_LOG_LLM: log_llm # data obtained from LLM with amount_increase
 FILE_LOG_LLM: gu_cases_amount_increase_final.csv # log with amount_increase obtained from LLM
+
+# MODELS CONFIGURATION
+DIR_CONFIGURATION: models_config
+FILE_CONFIGURATION_ENSEMBLE: config_ensemble.json
 
 # EVENT-LOG COLUMN NAMES
 LOG_CASE_ID_NAME: case_id
@@ -57,9 +67,6 @@ FILE_PREFIX_STATS: _PREFIX_stats.csv # Prefix statistics file
 # MODEL DUMPS
 MODEL_DUMP: 1 # 0: no, 1: yes
 
-# LOG AND LLM
-LLM_DO: 1 # 1: add to log the FILE_LOG_LLM data; 0: don't
-
 # APP-LOG
 APP_LOG_HEADER:
   - script_name
@@ -75,6 +82,8 @@ APP_LOG_DIC:
   start_time: None
   end_time: None
   delta_time: None
+DIR_APP_LOG: app_log # application log directory
+FILE_APP_LOG: app_log.csv  # application log file
 
 # LSTM
 EPOCHS_NUM: 200

@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 
 # MyDirectories
-_old
-_todo
+_old/
+_todo/
+models_dump/
 **/.DS_Store

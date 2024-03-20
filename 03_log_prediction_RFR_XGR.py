@@ -9,6 +9,7 @@
 # 2024-01-18: added metric -> Normalized RMSE = RMSE / (max value – min value)
 # 2024-01-14: added StandardScaler for amount column (https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
 # 2024-02-08: added the ability to exclude columns from the dataframe
+# 2024-03-04: results configuration
 
 ### IMPORT ###
 from datetime import datetime
@@ -25,6 +26,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 import sklearn.metrics as metrics
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
 import xgboost as xgb
 from scipy.stats import uniform, randint
 import joblib # joblib save the model in binary
@@ -33,7 +35,7 @@ import shap
 
 ### LOCAL IMPORT ###
 from config.config_reader import ConfigReadYaml
-from utils.utils import seconds_to_hours, app_log_init, app_log_write, file_list_by_type, get_llm_data, check_and_create_directory, script_info
+from utilities_manager.utilities import seconds_to_hours, app_log_init, app_log_write, file_list_by_type, get_llm_data, check_and_create_directory, script_info, read_json_config
 
 ### GLOBALS ###
 
@@ -46,7 +48,6 @@ dir_models_shap = yaml_config['DIR_MODELS_SHAP']
 dir_models_plot = yaml_config['DIR_MODELS_PLOT'] 
 
 # LLM
-llm_do = int(yaml_config['LLM_DO']) # yes / no
 dir_log_llm = yaml_config['DIR_LOG_LLM'] 
 log_llm_file = yaml_config['FILE_LOG_LLM'] 
 path_llm = os_path_join(dir_log_llm, log_llm_file)
@@ -87,17 +88,23 @@ app_log_file_header = list(yaml_config['APP_LOG_HEADER'])
 app_log_dic = dict(yaml_config['APP_LOG_DIC'])
 
 ### INPUT ###
-model_suffix = "XGR" # <-- INPUT: enter the desired model prefix (see *_PREFIX in config.yml) [RFR, XGR]
-# list_col_exclude = [log_amount_col_name] # <-- INPUT: enter the columns to be excluded from the data, else []
-list_col_exclude = [] # <-- INPUT: enter the columns to be excluded from the data, else []
+configuration_position = 0 # <-- INPUT: the desired configuration
+
+### MODEL CONFIGURATION ###
+dir_configuration = yaml_config['DIR_CONFIGURATION']
+file_configuration = yaml_config['FILE_CONFIGURATION_ENSEMBLE']
+configuration = read_json_config(dir_configuration, file_configuration, configuration_position) # configuration dictionary
+model_suffix = str(configuration["MODEL"])
+llm_do = int(configuration["LLM"])
+list_col_exclude = list(configuration["COLUMNS_EXCLUDED"])
 list_col_exclude_len = len(list_col_exclude)
 
 ### OUTPUT ###
 string_llm = "".join(["LLM-",str(llm_do)])
 string_col_exclude = "".join(["FEATEXC-",str(list_col_exclude_len)])
-results_configuration = "".join(["regression_", model_suffix, "_", string_col_exclude, "_" , string_llm]) # configuration
-file_results_csv = "".join([results_configuration, ".csv"]) # CSV file output
-file_results_xlsx = "".join([results_configuration, ".xlsx"]) # XLSX file output
+results_configuration = "".join(["regression_", model_suffix, "_", string_col_exclude, "_" , string_llm]) # configuration string
+file_results_csv = "".join([results_configuration, "_CV", ".csv"]) # CSV file output
+file_results_xlsx = "".join([results_configuration, "_CV", ".xlsx"]) # XLSX file output
 
 ### FUNCTIONS ###
 
@@ -298,7 +305,7 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     mape_ht = np.mean(np.abs((y_test - y_pred) / np.abs(y_test)))
     round_mape_ht = round(mape_ht * 100, 2)
     # accuracy_ht = round(100*(1 - mape_ht), 2)
-    rmse_ht_n = rmse_ht / (max_test - min_test)
+    rmse_ht_n = rmse_ht / (max_test - min_test) # RMSE normalized
 
     print('Mean Absolute Error (MAE) with HT:', mae_ht)
     print('Mean Squared Error (MSE) with HT:', mse_ht)
@@ -313,8 +320,15 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     print("- Timing:", time_delta_model, "(",string_hours,")")
     print()
 
+    # Note: use neg_mean_squared_error to obtain the negative MSE
+    cv_scores = cross_val_score(best_rf, vectors, labels, cv=5, scoring='neg_mean_squared_error')
+
+    # converts scores to positive RMSE
+    rmse_cv = np.sqrt(-cv_scores)
+    rmse_cv_norm = rmse_cv / (max_test - min_test) # RMSE normalized
+
     # Save metrics in the dictionary
-    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd':min_test, 'max_duration_dd': max_test, 'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
+    dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd':min_test, 'max_duration_dd': max_test, 'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv': rmse_cv, 'RMSE_cv_norm': rmse_cv_norm, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
 
     # Save the model and its data
     if model_dump == 1:
@@ -568,6 +582,8 @@ if model_dump == 1:
 print()
 
 print(">> Configuration")
+print("Position:", configuration_position)
+print("Position:", configuration)
 print("Prefix list:",prefix_list)
 print("Columns excluded ({}): ".format(list_col_exclude_len, list_col_exclude))
 print("LLM do:",llm_do)
