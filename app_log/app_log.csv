@@ -8,3 +8,4 @@ script_name;model;configuration;start_time;end_time;delta_time
 03_log_prediction_RFR_XGR.py;RFR;regression_RFR_FEATEXC-0_LLM-1;2024-03-12 06:59:28;2024-03-12 07:51:37;0:52:09
 03_log_prediction_LSTM.py;LSTM;regression_LSTM_FEATEXC-0_LLM-1;2024-03-12 07:00:03;2024-03-12 11:26:16;4:26:13
 03_log_prediction_RFR_XGR.py;XGR;regression_XGR_FEATEXC-0_LLM-1;2024-03-12 08:35:16;2024-03-12 15:12:53;6:37:37
+03_log_prediction_RFR_XGR.py;RFR;regression_RFR_FEATEXC-0_LLM-0;2024-03-20 15:12:28;2024-03-20 16:14:14;1:01:46

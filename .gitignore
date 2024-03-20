@@ -159,8 +159,13 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# MyDirectories
+# My Project Directories
 _old/
 _todo/
-models_dump/
 **/.DS_Store
+
+# Ignore everything inside the models_dump folder
+models_dump/*
+# But do not ignore the models_dump folder itself
+!models_dump/.gitkeep
+

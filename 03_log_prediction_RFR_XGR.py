@@ -10,6 +10,7 @@
 # 2024-01-14: added StandardScaler for amount column (https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
 # 2024-02-08: added the ability to exclude columns from the dataframe
 # 2024-03-04: results configuration
+# 2024-03-04: input configuration and Cross Validation
 
 ### IMPORT ###
 from datetime import datetime
@@ -264,7 +265,7 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
     mape = np.mean(np.abs((y_test - y_pred) / np.abs(y_test)))
     round_mape = round(mape * 100, 2)
-    #accuracy = round(100*(1 - mape), 2)
+    # accuracy = round(100*(1 - mape), 2)
     # Normalized RMSE = RMSE / (max value – min value)
     rmse_n = rmse / (max_test - min_test)
 
@@ -320,12 +321,18 @@ def model_rfr(vectors: np.ndarray, vectors_features:list, labels:list, llm_do:in
     print("- Timing:", time_delta_model, "(",string_hours,")")
     print()
 
+    # CROSS VALIDATION (CV)
+    
+    # Min and Max values for RMSE of CV normalization
+    min_cv = min(labels)
+    max_cv = max(labels)
+
     # Note: use neg_mean_squared_error to obtain the negative MSE
-    cv_scores = cross_val_score(best_rf, vectors, labels, cv=5, scoring='neg_mean_squared_error')
+    cv_scores = cross_val_score(best_rf, vectors, labels, cv=cv_folds_num, scoring='neg_mean_squared_error')
 
     # converts scores to positive RMSE
     rmse_cv = np.sqrt(-cv_scores)
-    rmse_cv_norm = rmse_cv / (max_test - min_test) # RMSE normalized
+    rmse_cv_norm = rmse_cv / (max_cv - min_cv) # RMSE normalized
 
     # Save metrics in the dictionary
     dic_result = {'file_name':file_csv, 'prefix_length': prefix_len, 'prefix_encoding': prefix_enc, 'model': model_suffix, 'features_num': vectors_features_len, 'features_excluded': list_col_exclude_len, 'LLM_data': llm_do, 'CV': cv_folds_num, 'min_duration_dd':min_test, 'max_duration_dd': max_test, 'RMSE_ht': rmse_ht, 'RMSE_ht_norm': rmse_ht_n, 'RMSE_cv': rmse_cv, 'RMSE_cv_norm': rmse_cv_norm, 'MAE_ht': mae_ht, 'MSE_ht': mse_ht, 'MAPE_ht': round_mape_ht, 'RMSE': rmse, 'RMSE_norm':rmse_n, 'MAE': mae, 'MSE': mse, 'MAPE': round_mape, 'timing_sec':time_delta_model, 'timing_hr':string_hours, 'memory': memory_size}
